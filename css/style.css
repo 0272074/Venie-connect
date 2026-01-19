@@ -1,0 +1,326 @@
+:root {
+    --bg-color: #1a1a1a;
+    --panel-bg: #2d2d2d;
+    --panel-border: #3d3d3d;
+    --accent-color: #00bcd4;
+    /* Cyan */
+    --accent-hover: #26c6da;
+    --text-main: #ffffff;
+    --text-muted: #b0b0b0;
+    --danger-color: #ff5252;
+    --success-color: #66bb6a;
+    --board-bg: #222222;
+    --grid-line: #333333;
+
+    --font-main: 'Inter', sans-serif;
+    --font-jp: 'Noto Sans JP', sans-serif;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: var(--font-main), var(--font-jp);
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    height: 100vh;
+    overflow: hidden;
+}
+
+.app-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+/* Header */
+.game-header {
+    height: 60px;
+    background-color: rgba(45, 45, 45, 0.8);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--panel-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+}
+
+.game-header h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+.game-status {
+    font-size: 0.9rem;
+    color: var(--accent-color);
+    border: 1px solid var(--accent-color);
+    padding: 4px 12px;
+    border-radius: 20px;
+}
+
+/* Main Layout */
+.game-layout {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+}
+
+.board-section {
+    flex: 1;
+    background-color: var(--board-bg);
+    /* Fallback */
+    /* Add subtle grid background here if image fails */
+    background-image:
+        linear-gradient(var(--grid-line) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+    background-size: 60px 60px;
+    /* Match TILE_SIZE */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.canvas-wrapper {
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    background-color: rgba(30, 30, 30, 0.9);
+    border-radius: 4px;
+}
+
+/* Control Panel */
+.control-panel {
+    width: 320px;
+    background-color: var(--panel-bg);
+    border-left: 1px solid var(--panel-border);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    overflow-y: auto;
+}
+
+.panel-card {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.panel-card h3 {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+}
+
+/* Player Info */
+.player-info {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.player-badge {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    opacity: 0.5;
+    transition: all 0.3s ease;
+}
+
+.player-badge.active {
+    opacity: 1;
+    transform: scale(1.05);
+}
+
+.player-badge.active .avatar {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 10px var(--accent-color);
+}
+
+.avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background-color: #444;
+    border: 2px solid transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    margin-bottom: 4px;
+}
+
+.name {
+    font-size: 0.8rem;
+}
+
+.vs-divider {
+    font-weight: bold;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+/* Action Area */
+.tile-preview-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 16px;
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    padding: 10px;
+}
+
+.button-group {
+    display: flex;
+    gap: 10px;
+}
+
+.btn {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    font-family: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn-primary {
+    background-color: var(--accent-color);
+    color: #000;
+}
+
+.btn-primary:hover {
+    background-color: var(--accent-hover);
+}
+
+.btn-secondary {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--text-main);
+}
+
+.btn-secondary:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.btn-danger {
+    background-color: rgba(255, 82, 82, 0.2);
+    color: var(--danger-color);
+    border: 1px solid var(--danger-color);
+}
+
+.btn-danger:hover {
+    background-color: rgba(255, 82, 82, 0.3);
+}
+
+/* Log Area */
+.log-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.log-content {
+    flex: 1;
+    overflow-y: auto;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    max-height: 200px;
+}
+
+.log-entry {
+    margin-bottom: 6px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Footer */
+.game-footer {
+    padding: 12px 24px;
+    background-color: var(--panel-bg);
+    border-top: 1px solid var(--panel-border);
+    text-align: center;
+}
+
+.system-message {
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    .game-layout {
+        flex-direction: column;
+    }
+
+    .control-panel {
+        width: 100%;
+        height: 40%;
+        border-left: none;
+        border-top: 1px solid var(--panel-border);
+
+        /* Modal */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 1;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal.hidden {
+            display: none;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .modal-content {
+            background-color: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            padding: 32px;
+            border-radius: 16px;
+            width: 400px;
+            max-width: 90%;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            transform: translateY(0);
+            transition: transform 0.3s ease;
+        }
+
+        .modal h2 {
+            font-size: 2rem;
+            color: var(--accent-color);
+            margin-bottom: 16px;
+        }
+
+        .modal p {
+            font-size: 1.2rem;
+            margin-bottom: 24px;
+            line-height: 1.5;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+        }
