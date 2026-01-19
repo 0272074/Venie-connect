@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Venice Connection</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #1a1a1a;
+            --panel: #2d2d2d;
+            --border: #3d3d3d;
+            --accent: #00bcd4;
+            --text: #fff;
+            --muted: #b0b0b0;
+            --danger: #ff5252;
+            --board: #1e1e1e;
+            --grid: #2a2a2a;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .app {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        header {
+            height: 50px;
+            background: rgba(45, 45, 45, 0.9);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+        }
+
+        header h1 {
+            font-size: 1.2rem;
+        }
+
+        .status {
+            font-size: 0.85rem;
+            color: var(--accent);
+            border: 1px solid var(--accent);
+            padding: 3px 10px;
+            border-radius: 15px;
+        }
+
+        main {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        .board {
+            flex: 1;
+            background: var(--board);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #canvas {
+            cursor: crosshair;
+        }
+
+        .panel {
+            width: 240px;
+            background: var(--panel);
+            border-left: 1px solid var(--border);
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            overflow-y: auto;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .card h3 {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 6px;
+        }
+
+        .players {
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+        }
+
+        .player {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            opacity: 0.4;
+            transition: all 0.3s;
+        }
+
+        .player.on {
+            opacity: 1;
+            transform: scale(1.05);
+        }
+
+        .player.on .av {
+            border-color: var(--accent);
+            box-shadow: 0 0 8px var(--accent);
+        }
+
+        .av {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #444;
+            border: 2px solid transparent;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            margin-bottom: 3px;
+        }
+
+        .name {
+            font-size: 0.7rem;
+        }
+
+        .vs {
+            font-weight: bold;
+            color: var(--muted);
+            font-size: 0.7rem;
+        }
+
+        .deck-display {
+            text-align: center;
+            padding: 12px;
+            background: linear-gradient(135deg, rgba(0, 188, 212, 0.15), rgba(0, 150, 180, 0.1));
+            border-radius: 10px;
+        }
+
+        .deck-display .big {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: var(--accent);
+        }
+
+        .deck-display .label {
+            font-size: 0.8rem;
+            color: var(--muted);
+            margin-top: 4px;
+        }
+
+        .tiles {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin: 10px 0;
+        }
+
+        .tile-opt {
+            width: 55px;
+            height: 55px;
+            border: 2px solid #555;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #333;
+        }
+
+        .tile-opt:hover {
+            border-color: #888;
+        }
+
+        .tile-opt.sel {
+            border-color: var(--accent);
+            box-shadow: 0 0 8px var(--accent);
+        }
+
+        .tile-opt canvas {
+            pointer-events: none;
+        }
+
+        .btns {
+            display: flex;
+            gap: 6px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            font-family: inherit;
+            font-weight: 600;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-p {
+            background: var(--accent);
+            color: #000;
+        }
+
+        .btn-s {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text);
+        }
+
+        .btn-d {
+            background: rgba(255, 82, 82, 0.2);
+            color: var(--danger);
+            border: 1px solid var(--danger);
+            font-size: 0.75rem;
+        }
+
+        .shortcuts {
+            font-size: 0.65rem;
+            color: var(--muted);
+            text-align: center;
+            margin-top: 6px;
+            line-height: 1.4;
+        }
+
+        .log {
+            flex: 1;
+            min-height: 60px;
+        }
+
+        .log-c {
+            overflow-y: auto;
+            font-size: 0.7rem;
+            color: var(--muted);
+            max-height: 100px;
+        }
+
+        .log-e {
+            margin-bottom: 2px;
+            padding-bottom: 2px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        footer {
+            padding: 8px 20px;
+            background: var(--panel);
+            border-top: 1px solid var(--border);
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal.hide {
+            display: none;
+        }
+
+        .modal-c {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            padding: 24px;
+            border-radius: 14px;
+            width: 360px;
+            text-align: center;
+        }
+
+        .modal h2 {
+            font-size: 1.5rem;
+            color: var(--accent);
+            margin-bottom: 10px;
+        }
+
+        .modal p {
+            font-size: 0.95rem;
+            margin-bottom: 16px;
+            line-height: 1.4;
+            white-space: pre-line;
+        }
+
+        .turn-info {
+            font-size: 0.75rem;
+            color: var(--accent);
+            margin-top: 6px;
+        }
+
+        @media (max-width: 768px) {
+            main {
+                flex-direction: column;
+            }
+
+            .panel {
+                width: 100%;
+                height: 45%;
+                border-left: none;
+                border-top: 1px solid var(--border);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app">
+        <header>
+            <h1>🚣 Venice Connection</h1>
+            <div class="status" id="status">対戦中</div>
+        </header>
+        <main>
+            <section class="board"><canvas id="canvas"></canvas></section>
+            <aside class="panel">
+                <div class="card players">
+                    <div class="player on" id="p1"><span class="av">🧑</span><span class="name">あなた</span></div>
+                    <div class="vs">VS</div>
+                    <div class="player" id="p2"><span class="av">🤖</span><span class="name">CPU</span></div>
+                </div>
+                <div class="card">
+                    <h3>山札</h3>
+                    <div class="deck-display">
+                        <div class="big" id="deck-total">16</div>
+                        <div class="label">残り枚数</div>
+                    </div>
+                    <div class="tiles">
+                        <div class="tile-opt sel" id="opt-s"><canvas width="40" height="40"></canvas></div>
+                        <div class="tile-opt" id="opt-c"><canvas width="40" height="40"></canvas></div>
+                    </div>
+                    <div class="shortcuts">Tab: 種類切替 / 右クリック: 回転</div>
+                    <div class="turn-info" id="turn-info">このターン: 0/3枚</div>
+                </div>
+                <div class="card">
+                    <div class="btns">
+                        <button id="btn-pass" class="btn btn-s">確定</button>
+                        <button id="btn-imp" class="btn btn-d">⚠️ 不可能宣言</button>
+                    </div>
+                </div>
+                <div class="card rules">
+                    <h3>ルール</h3>
+                    <div class="rules-content">
+                        <p>🎯 <b>目的</b>: タイルを繋げてループ(輪)を完成</p>
+                        <p>📦 1ターン1〜3枚、直線状に配置</p>
+                        <p>⚠️ <b>不可能宣言</b>: ループ完成が無理だと思ったら宣言→正解で勝利!</p>
+                    </div>
+                </div>
+            </aside>
+        </main>
+        <footer id="msg">あなたの手番</footer>
+        <div id="modal" class="modal hide">
+            <div class="modal-c">
+                <h2 id="m-title">結果</h2>
+                <p id="m-msg">メッセージ</p>
+                <div class="btns" id="modal-btns"></div>
+            </div>
+        </div>
+    </div>
+    <script>
+        const C = { SZ: 50, S: 'S', L: 'L', BG: '#1e1e1e', GR: '#2a2a2a', TB: '#607d8b', TBR: '#455a64', W: '#29b6f6', OK: 'rgba(102,187,106,0.6)', NG: 'rgba(239,83,80,0.4)' };
+
+        class Tile {
+            constructor(t) { this.type = t; this.rot = 0; }
+            rotate() { this.rot = (this.rot + 1) % 4; }
+            setRot(r) { this.rot = r % 4; }
+            conn() {
+                if (this.type === C.S) return this.rot % 2 === 0 ? [0, 2] : [1, 3];
+                return [1, 2].map(d => (d + this.rot) % 4);
+            }
+        }
+
+        class Board {
+            constructor() { this.g = new Map(); this.minX = 0; this.maxX = 0; this.minY = 0; this.maxY = 0; }
+            get(x, y) { return this.g.get(`${x},${y}`); }
+            set(x, y, t) {
+                this.g.set(`${x},${y}`, t);
+                this.minX = Math.min(this.minX, x); this.maxX = Math.max(this.maxX, x);
+                this.minY = Math.min(this.minY, y); this.maxY = Math.max(this.maxY, y);
+            }
+            del(x, y) { this.g.delete(`${x},${y}`); }
+            clone() {
+                const b = new Board();
+                for (const [k, v] of this.g) { const t = new Tile(v.type); t.setRot(v.rot); b.g.set(k, t); }
+                b.minX = this.minX; b.maxX = this.maxX; b.minY = this.minY; b.maxY = this.maxY;
+                return b;
+            }
+            valid(x, y, tile) {
+                if (this.get(x, y)) return false;
+                const off = [{ dx: 0, dy: -1 }, { dx: 1, dy: 0 }, { dx: 0, dy: 1 }, { dx: -1, dy: 0 }];
+                let hasN = false;
+                const mc = tile.conn();
+                for (let d = 0; d < 4; d++) {
+                    const n = this.get(x + off[d].dx, y + off[d].dy);
+                    if (n) { hasN = true; if (mc.includes(d) !== n.conn().includes((d + 2) % 4)) return false; }
+                }
+                return this.g.size === 0 || hasN;
+            }
+            open() {
+                if (this.g.size === 0) return true;
+                const off = [{ dx: 0, dy: -1 }, { dx: 1, dy: 0 }, { dx: 0, dy: 1 }, { dx: -1, dy: 0 }];
+                for (const [k, t] of this.g) {
+                    const [x, y] = k.split(',').map(Number);
+                    for (const d of t.conn()) if (!this.get(x + off[d].dx, y + off[d].dy)) return true;
+                }
+                return false;
+            }
+            openSpots() {
+                const spots = new Set();
+                const off = [{ dx: 0, dy: -1 }, { dx: 1, dy: 0 }, { dx: 0, dy: 1 }, { dx: -1, dy: 0 }];
+                for (const [k, t] of this.g) {
+                    const [x, y] = k.split(',').map(Number);
+                    for (const d of t.conn()) {
+                        const nx = x + off[d].dx, ny = y + off[d].dy;
+                        if (!this.get(nx, ny)) spots.add(`${nx},${ny}`);
+                    }
+                }
+                return [...spots].map(s => { const [x, y] = s.split(',').map(Number); return { x, y }; });
+            }
+        }
+
+        class Solver {
+            static solve(board, remaining, path = [], depth = 0) {
+                if (!board.open()) return { ok: true, path };
+                if (remaining === 0 || depth > 50) return { ok: false, path: [] };
+                const spots = board.openSpots();
+                if (spots.length === 0) return { ok: false, path: [] };
+                const { x, y } = spots[0];
+                for (const type of [C.S, C.L]) {
+                    const rots = type === C.S ? 2 : 4;
+                    for (let r = 0; r < rots; r++) {
+                        const t = new Tile(type); t.setRot(r);
+                        if (board.valid(x, y, t)) {
+                            board.set(x, y, t);
+                            const res = this.solve(board, remaining - 1, [...path, { x, y, type, rot: r }], depth + 1);
+                            if (res.ok) return res;
+                            board.del(x, y);
+                        }
+                    }
+                }
+                return { ok: false, path: [] };
+            }
+            static canComplete(board, remaining) {
+                if (remaining <= 0) return !board.open();
+                return this.solve(board.clone(), remaining, [], 0).ok;
+            }
+        }
+
+        class Game {
+            constructor() {
+                this.board = new Board();
+                this.cvs = document.getElementById('canvas');
+                this.ctx = this.cvs.getContext('2d');
+                this.player = 1;
+                this.moves = [];
+                this.deckCount = 16;
+                this.selType = C.S;
+                this.tile = new Tile(C.S);
+                this.isCpu = true;
+                this.cpuBusy = false;
+                this.demoMode = false;
+                this.turnEnded = false;
+                this.pendingSolution = null;
+                this.centerX = 0; this.centerY = 0;
+                this.resize();
+                window.addEventListener('resize', () => this.resize());
+                this.setup();
+                this.updateUI();
+                this.startTurn();
+            }
+            resize() { const p = this.cvs.parentElement; this.cvs.width = p.clientWidth; this.cvs.height = p.clientHeight; this.render(); }
+            setup() {
+                const os = document.getElementById('opt-s'), ol = document.getElementById('opt-c');
+                this.drawPrev(os.querySelector('canvas'), C.S);
+                this.drawPrev(ol.querySelector('canvas'), C.L);
+                os.onclick = () => this.selTile(C.S);
+                ol.onclick = () => this.selTile(C.L);
+                document.getElementById('btn-pass').onclick = () => this.pass();
+                document.getElementById('btn-imp').onclick = () => this.declare();
+                this.cvs.addEventListener('mousemove', e => this.onMove(e));
+                this.cvs.addEventListener('click', e => this.onClick(e));
+                this.cvs.addEventListener('contextmenu', e => { e.preventDefault(); this.rotate(); });
+                document.addEventListener('keydown', e => this.onKey(e));
+            }
+            closeModal() {
+                document.getElementById('modal').classList.add('hide');
+                if (this.pendingSolution) {
+                    const path = this.pendingSolution;
+                    this.pendingSolution = null;
+                    this.playSolution(path);
+                }
+            }
+            onKey(e) {
+                if (this.demoMode || (this.player === 2 && this.isCpu)) return;
+                if (e.key === 'Tab') { e.preventDefault(); this.toggleTileType(); }
+                else if (e.key === 'r' || e.key === 'R') { this.rotate(); }
+            }
+            toggleTileType() { this.selTile(this.selType === C.S ? C.L : C.S); }
+            selTile(t) {
+                if (this.demoMode || (this.player === 2 && this.isCpu)) return;
+                this.selType = t;
+                this.tile = new Tile(t);
+                document.getElementById('opt-s').classList.toggle('sel', t === C.S);
+                document.getElementById('opt-c').classList.toggle('sel', t === C.L);
+                this.render();
+            }
+            rotate() {
+                if (this.demoMode || (this.player === 2 && this.isCpu && !this.cpuBusy)) return;
+                this.tile.rotate();
+                this.render();
+            }
+            startTurn() {
+                this.moves = [];
+                this.turnEnded = false;
+                this.updateUI();
+                if (this.deckCount === 0) { this.showResult('引き分け', 'タイル切れ'); return; }
+                if (this.player === 2 && this.isCpu) setTimeout(() => this.cpuTurn(), 600);
+            }
+            pass() {
+                if (this.demoMode || (this.player === 2 && this.isCpu)) return;
+                if (this.moves.length > 0) this.switchTurn();
+                else this.log('1枚以上配置してください');
+            }
+            declare() {
+                if (this.demoMode || (this.player === 2 && this.isCpu)) return;
+                this.log('「不可能」宣言！');
+                console.log('Solving...');
+                const result = Solver.solve(this.board.clone(), this.deckCount);
+                console.log('Result:', result);
+                if (!result.ok) {
+                    this.showResult('🎉 勝利！', '正解！ループ完成は不可能でした');
+                } else {
+                    this.pendingSolution = result.path;
+                    this.showResult('😢 敗北', '不正解。ループ完成可能です', true);
+                }
+            }
+            async playSolution(path) {
+                console.log('Playing solution, path length:', path ? path.length : 0);
+                this.demoMode = true;
+                document.getElementById('status').textContent = '🎬 解答再生';
+                document.getElementById('msg').textContent = '解答アニメーション...';
+
+                if (!path || path.length === 0) {
+                    this.log('解答パスが空です');
+                    await this.sleep(1000);
+                    this.showResult('エラー', '解答を表示できませんでした');
+                    return;
+                }
+
+                this.log(`解答: ${path.length}手`);
+
+                for (let i = 0; i < path.length; i++) {
+                    const step = path[i];
+                    console.log(`Step ${i + 1}:`, step);
+                    const t = new Tile(step.type);
+                    t.setRot(step.rot);
+                    this.board.set(step.x, step.y, t);
+                    this.deckCount--;
+                    this.updateUI();
+                    this.updateCenter();
+                    this.render();
+                    this.log(`${i + 1}. (${step.x},${step.y}) ${step.type === C.S ? '直線' : '曲線'}`);
+                    await this.sleep(600);
+                }
+                await this.sleep(500);
+                this.showResult('🎓 解答完了', `${path.length}手でループ完成`);
+            }
+            onMove(e) {
+                if (this.demoMode || (this.player === 2 && this.isCpu)) return;
+                const r = this.cvs.getBoundingClientRect();
+                const ox = this.cvs.width / 2 - this.centerX * C.SZ;
+                const oy = this.cvs.height / 2 - this.centerY * C.SZ;
+                this.hx = Math.floor((e.clientX - r.left - ox) / C.SZ);
+                this.hy = Math.floor((e.clientY - r.top - oy) / C.SZ);
+                this.render();
+            }
+            onClick(e) {
+                if (this.demoMode || (this.player === 2 && this.isCpu)) return;
+                for (let r = 0; r < 4; r++) {
+                    if (this.board.valid(this.hx, this.hy, this.tile) && this.turnOK(this.hx, this.hy)) {
+                        this.place(this.hx, this.hy);
+                        return;
+                    }
+                    this.tile.rotate();
+                }
+                this.render();
+            }
+            turnOK(x, y) {
+                if (this.moves.length === 0) return true;
+                if (this.moves.length >= 3) return false;
+                const last = this.moves[this.moves.length - 1];
+                const dx = Math.abs(x - last.x), dy = Math.abs(y - last.y);
+                if (dx + dy !== 1) return false;
+                if (this.moves.length === 1) return true;
+                const f = this.moves[0], s = this.moves[1];
+                if (f.x === s.x) return x === f.x;
+                if (f.y === s.y) return y === f.y;
+                return false;
+            }
+            place(x, y) {
+                const t = new Tile(this.tile.type);
+                t.setRot(this.tile.rot);
+                this.board.set(x, y, t);
+                this.moves.push({ x, y });
+                this.deckCount--;
+                this.updateUI();
+                this.log(`(${x},${y}) 配置`);
+                this.updateCenter();
+                if (!this.board.open()) {
+                    this.render();
+                    this.showResult(this.player === 1 ? '🎉 勝利！' : '😢 敗北', 'ループ完成！');
+                    this.turnEnded = true;
+                    return;
+                }
+                if (this.moves.length < 3 && this.deckCount > 0) {
+                    this.tile = new Tile(this.selType);
+                    this.render();
+                } else {
+                    this.turnEnded = true;
+                    this.switchTurn();
+                }
+            }
+            updateCenter() {
+                if (this.board.g.size > 0) {
+                    this.centerX = (this.board.minX + this.board.maxX) / 2 + 0.5;
+                    this.centerY = (this.board.minY + this.board.maxY) / 2 + 0.5;
+                }
+            }
+            switchTurn() { this.player = this.player === 1 ? 2 : 1; this.startTurn(); }
+
+            async cpuTurn() {
+                this.cpuBusy = true;
+                this.turnEnded = false;
+                this.log('思考中...');
+                await this.sleep(400);
+                let made = 0;
+                const maxTarget = Math.floor(Math.random() * 2) + 1;
+                while (made < maxTarget && this.moves.length < 3 && this.deckCount > 0 && !this.turnEnded) {
+                    const ok = await this.cpuMove();
+                    if (!ok) break;
+                    made++;
+                    if (this.turnEnded) break;
+                    await this.sleep(400);
+                }
+                this.cpuBusy = false;
+                if (!this.turnEnded) this.switchTurn();
+            }
+
+            async cpuMove() {
+                const cands = [];
+                for (const ty of [C.S, C.L]) {
+                    for (let y = this.board.minY - 2; y <= this.board.maxY + 2; y++) {
+                        for (let x = this.board.minX - 2; x <= this.board.maxX + 2; x++) {
+                            for (let r = 0; r < 4; r++) {
+                                const t = new Tile(ty); t.setRot(r);
+                                if (this.board.valid(x, y, t) && this.turnOK(x, y)) {
+                                    const testBoard = this.board.clone();
+                                    testBoard.set(x, y, t);
+                                    const canWin = Solver.canComplete(testBoard, this.deckCount - 1);
+                                    cands.push({ x, y, type: ty, r, score: canWin ? 10 : 0 });
+                                }
+                            }
+                        }
+                    }
+                }
+                if (cands.length === 0) return false;
+                cands.sort((a, b) => b.score - a.score);
+                const bestScore = cands[0].score;
+                const bestCands = cands.filter(c => c.score === bestScore);
+                const c = bestCands[Math.floor(Math.random() * bestCands.length)];
+                this.selType = c.type;
+                this.tile = new Tile(c.type);
+                this.tile.setRot(c.r);
+                this.render();
+                await this.sleep(150);
+                this.place(c.x, c.y);
+                return true;
+            }
+
+            sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+            updateUI() {
+                document.getElementById('deck-total').textContent = this.deckCount;
+                document.getElementById('p1').classList.toggle('on', this.player === 1);
+                document.getElementById('p2').classList.toggle('on', this.player === 2);
+                document.getElementById('msg').textContent = this.player === 1 ? 'あなたの手番' : 'CPU思考中...';
+                document.getElementById('turn-info').textContent = `このターン: ${this.moves.length}/3枚`;
+            }
+            log(m) {
+                const a = document.getElementById('log');
+                const p = document.createElement('p');
+                p.className = 'log-e';
+                p.textContent = (this.player === 1 ? '👤 ' : '🤖 ') + m;
+                a.prepend(p);
+            }
+            drawPrev(cvs, type) { const t = new Tile(type); this.drawTile(cvs.getContext('2d'), 0, 0, 40, t); }
+            render() {
+                const ctx = this.ctx, w = this.cvs.width, h = this.cvs.height, sz = C.SZ;
+                const ox = w / 2 - this.centerX * sz, oy = h / 2 - this.centerY * sz;
+                ctx.fillStyle = C.BG; ctx.fillRect(0, 0, w, h);
+                ctx.strokeStyle = C.GR; ctx.lineWidth = 1; ctx.beginPath();
+                for (let gx = -30; gx <= 50; gx++) { const x = gx * sz + ox; ctx.moveTo(x, 0); ctx.lineTo(x, h); }
+                for (let gy = -30; gy <= 50; gy++) { const y = gy * sz + oy; ctx.moveTo(0, y); ctx.lineTo(w, y); }
+                ctx.stroke();
+                this.board.g.forEach((t, k) => {
+                    const [gx, gy] = k.split(',').map(Number);
+                    this.drawTile(ctx, gx * sz + ox, gy * sz + oy, sz, t);
+                });
+                if (this.hx !== undefined && this.player === 1 && !this.demoMode) {
+                    let ok = false;
+                    for (let r = 0; r < 4; r++) {
+                        const tt = new Tile(this.tile.type);
+                        tt.setRot((this.tile.rot + r) % 4);
+                        if (this.board.valid(this.hx, this.hy, tt) && this.turnOK(this.hx, this.hy)) { ok = true; break; }
+                    }
+                    const px = this.hx * sz + ox, py = this.hy * sz + oy;
+                    ctx.globalAlpha = 0.5;
+                    this.drawTile(ctx, px, py, sz, this.tile);
+                    ctx.globalAlpha = 1;
+                    ctx.strokeStyle = ok ? C.OK : C.NG;
+                    ctx.lineWidth = 3;
+                    ctx.strokeRect(px, py, sz, sz);
+                }
+            }
+            drawTile(ctx, x, y, sz, tile) {
+                ctx.save();
+                ctx.fillStyle = C.TB; ctx.fillRect(x, y, sz, sz);
+                ctx.strokeStyle = C.TBR; ctx.lineWidth = 2; ctx.strokeRect(x, y, sz, sz);
+                ctx.strokeStyle = C.W; ctx.lineWidth = sz * 0.26; ctx.lineCap = 'round';
+                const c = sz / 2;
+                ctx.translate(x + c, y + c);
+                ctx.rotate(tile.rot * Math.PI / 2);
+                ctx.translate(-c, -c);
+                ctx.beginPath();
+                if (tile.type === C.S) { ctx.moveTo(c, 0); ctx.lineTo(c, sz); }
+                else { ctx.arc(sz, sz, sz / 2, Math.PI, 1.5 * Math.PI); }
+                ctx.stroke();
+                ctx.restore();
+            }
+            showResult(title, msg, showSolution = false) {
+                document.getElementById('m-title').textContent = title;
+                document.getElementById('m-msg').textContent = msg;
+                const btns = document.getElementById('modal-btns');
+                btns.innerHTML = '';
+                if (showSolution) {
+                    const btnShow = document.createElement('button');
+                    btnShow.className = 'btn btn-p';
+                    btnShow.textContent = '解答を表示';
+                    btnShow.onclick = () => this.startSolutionDemo();
+                    btns.appendChild(btnShow);
+                    const btnRetry = document.createElement('button');
+                    btnRetry.className = 'btn btn-s';
+                    btnRetry.textContent = 'もう一戦';
+                    btnRetry.onclick = () => location.reload();
+                    btns.appendChild(btnRetry);
+                } else {
+                    const btnRetry = document.createElement('button');
+                    btnRetry.className = 'btn btn-p';
+                    btnRetry.textContent = 'もう一戦';
+                    btnRetry.onclick = () => location.reload();
+                    btns.appendChild(btnRetry);
+                }
+                document.getElementById('modal').classList.remove('hide');
+            }
+            startSolutionDemo() {
+                document.getElementById('modal').classList.add('hide');
+                if (this.pendingSolution) {
+                    const path = this.pendingSolution;
+                    this.pendingSolution = null;
+                    this.playSolution(path);
+                }
+            }
+        }
+        document.addEventListener('DOMContentLoaded', () => { window.game = new Game(); });
+    </script>
+</body>
+
+</html>
